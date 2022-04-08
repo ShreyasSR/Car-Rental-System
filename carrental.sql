@@ -1,4 +1,6 @@
 -- CREATE DATABASE carrentalsystem;
+-- Reservation, Car, Address --> Swastik
+-- Person, Waitlist, Model type --> Shreyas
 
 CREATE TABLE IF NOT EXISTS person(
     userID INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -31,3 +33,4 @@ CREATE TABLE IF NOT EXISTS modelType(
     CONSTRAINT wID PRIMARY KEY(waitID),
     CONSTRAINT fk2 FOREIGN KEY(userID) REFERENCES PERSON,
     CONSTRAINT fk3 FOREIGN KEY(modelID) REFERENCES ModelTYpe,);
+
