@@ -1,1 +1,3 @@
 -- CREATE DATABASE carrentalsystem;
+-- Reservation, Car, Address --> Swastik
+-- Person, Waitlist, Model type --> Shreyas
