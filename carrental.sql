@@ -1,6 +1,17 @@
 -- CREATE DATABASE carrentalsystem;
 -- Reservation, Car, Address --> Swastik
 -- Person, Waitlist, Model type --> Shreyas
+--CREATE DATABASE carrentalsystem;
+
+USE carrentalsystem;
+
+CREATE TABLE IF NOT EXISTS address(
+    addressID VARCHAR(50),
+    street VARCHAR(100),
+    city VARCHAR(30),
+    state VARCHAR(30),
+    country VARCHAR(30),
+);
 
 CREATE TABLE IF NOT EXISTS person(
     userID INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -8,7 +19,7 @@ CREATE TABLE IF NOT EXISTS person(
     lastName VARCHAR(50) NOT NULL DEFAULT '',
     email VARCHAR(50) NOT NULL,
     phone VARCHAR(15) NOT NULL,
-    userName VARCHAR(30) NOT NULL,
+    userName VARCHAR(30) NOT NULL,  
     pwd VARCHAR(225) NOT NULL,
     gender ENUM('M','F','Other'),
     addressID VARCHAR(11) NOT NULL,
@@ -31,6 +42,6 @@ CREATE TABLE IF NOT EXISTS modelType(
     modelID INT UNSIGNED NOT NULL
     
     CONSTRAINT wID PRIMARY KEY(waitID),
-    CONSTRAINT fk2 FOREIGN KEY(userID) REFERENCES PERSON,
-    CONSTRAINT fk3 FOREIGN KEY(modelID) REFERENCES ModelTYpe,);
+    CONSTRAINT fk2 FOREIGN KEY(userID) REFERENCES person,
+    CONSTRAINT fk3 FOREIGN KEY(modelID) REFERENCES modelType,);
 
