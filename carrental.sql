@@ -13,6 +13,15 @@ CREATE TABLE IF NOT EXISTS address(
     country VARCHAR(30),
 );
 
+
+DROP TABLE person;
+DROP TABLE modelType;
+DROP TABLE waitlist;
+DROP TABLE person;
+DROP TABLE person;
+DROP TABLE person;
+
+
 CREATE TABLE IF NOT EXISTS person(
     userID INT UNSIGNED NOT NULL AUTO_INCREMENT,
     firstName VARCHAR(50) NOT NULL DEFAULT '',
@@ -45,3 +54,34 @@ CREATE TABLE IF NOT EXISTS modelType(
     CONSTRAINT fk2 FOREIGN KEY(userID) REFERENCES person,
     CONSTRAINT fk3 FOREIGN KEY(modelID) REFERENCES modelType,);
 
+CREATE TABLE IF NOT EXISTS address(
+    addressID INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    street VARCHAR(100),
+    city VARCHAR(100),
+    state VARCHAR(100),
+    country VARCHAR(100),
+    zip INT UNSIGNED NOT NULL
+);
+CREATE TABLE IF NOT EXISTS car(
+    carID int UNSIGNED NOT NULL AUTO_INCREMENT,
+    modelID int UNSIGNED NOT NULL,
+    ownerID int UNSIGNED NOT NULL,
+    carimg VARCHAR(200),
+    PRIMARY KEY(carID),
+    FOREIGN KEY(modelID) REFERENCES modelType(modelID)
+        on delete set NULL,
+    FOREIGN KEY(ownerID) REFERENCES person(userID)
+        on delete cascade,
+);
+CREATE TABLE IF NOT EXISTS reservation(
+    rID int UNSIGNED NOT NULL AUTO_INCREMENT,
+    userID int UNSIGNED NOT NULL,
+    carID int UNSIGNED NOT NULL,
+    ratemode NUMERIC(2) UNSIGNED NOT NULL,
+    timein TIMESTAMP not null,
+    timeout timestamp not null,
+    FOREIGN KEY(userID) REFERENCES person(userID)
+        on delete cascade,
+    FOREIGN KEY(carID) REFERENCES car(carID)
+        on delete cascade
+);
