@@ -68,5 +68,9 @@ CREATE TABLE IF NOT EXISTS reservation(
     carID int UNSIGNED NOT NULL,
     ratemode NUMERIC(2) UNSIGNED NOT NULL,
     timein TIMESTAMP not null,
-    timeout timestamp not null
+    timeout timestamp not null,
+    FOREIGN KEY(userID) REFERENCES person(userID)
+        on delete cascade,
+    FOREIGN KEY(carID) REFERENCES car(carID)
+        on delete cascade
 );
