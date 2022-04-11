@@ -53,7 +53,8 @@ CREATE TABLE IF NOT EXISTS modelType(
     CONSTRAINT pk_m PRIMARY KEY(modelID)
 );
 
-    CREATE TABLE IF NOT EXISTS waitlist(
+
+CREATE TABLE IF NOT EXISTS waitlist(
     waitID INT UNSIGNED NOT NULL AUTO_INCREMENT,
     userID INT UNSIGNED NOT NULL,
     modelID INT UNSIGNED NOT NULL,
@@ -73,7 +74,7 @@ CREATE TABLE IF NOT EXISTS car(
     carimg VARCHAR(200),
     CONSTRAINT pk_c PRIMARY KEY(carID),
     CONSTRAINT fk_c_m FOREIGN KEY(modelID) REFERENCES modelType(modelID)
-        on delete set ,
+        on delete cascade , -- check once more
     CONSTRAINT fk_c_p FOREIGN KEY(ownerID) REFERENCES person(userID)
         on delete cascade
 );
@@ -91,6 +92,10 @@ CREATE TABLE IF NOT EXISTS reservation(
     CONSTRAINT fk_r_c FOREIGN KEY(carID) REFERENCES car(carID)
         on delete cascade
 );
+
+ 
+
+
 INSERT INTO carrentalsystem.address (street, city, state, country, zip) VALUES ('22B-Bakers Street', 'London', 'London', 'England', 0);
 INSERT INTO carrentalsystem.address (street, city, state, country, zip) VALUES ('5/a, Modi Chawl, Station Rd, Santacruz (west)', 'Mumbai', 'Maharashtra', 'India', 400054);
 INSERT INTO carrentalsystem.address (street, city, state, country, zip) VALUES ('13, Karaneeswarar Pagoda St, Mylapore', 'Chennai', 'Tamil Nadu', 'India', 600004);
@@ -99,11 +104,16 @@ INSERT INTO carrentalsystem.address (street, city, state, country, zip) VALUES (
 INSERT INTO carrentalsystem.address (street, city, state, country, zip) VALUES ('3683 Union Street', 'Seattle', 'Washington', 'United States', 98101);
 INSERT INTO carrentalsystem.address (street, city, state, country, zip) VALUES ('2119 Shinn Avenue', 'Pittsburgh', 'Pennsylvania', 'United States', 15222);
 
--- INSERT INTO carrentalsystem.modelType (name, description, rate_by_hour, rate_by_km) VALUES ();
+INSERT INTO carrentalsystem.person(firstName, lastName, email, phone, userName, pwd, gender, addressID)
+	VALUES ('Sherlock','Holmes','sherholmes@gmail.com','+447911123456','sherh','drWatson','M',1);
+    
+SELECT * from person;
 
--- INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES ();
--- INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES ();
--- INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES ();
--- INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES ();
--- INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES ();
--- INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES ();
+INSERT INTO carrentalsystem.modelType (name, description, rate_by_hour, rate_by_km) VALUES ('Maruti Swift Dzire','Available in White, Gray & Blue Colours',120,11);
+
+INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES (1,);
+INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES ();
+INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES ();
+INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES ();
+INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES ();
+INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES ();
