@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS car(
     carimg VARCHAR(200),
     CONSTRAINT pk_c PRIMARY KEY(carID),
     CONSTRAINT fk_c_m FOREIGN KEY(modelID) REFERENCES modelType(modelID)
-        on delete cascade on update cascade, -- check once more | Shouldn't we restrict it, instead of cascade
+        on delete cascade on update cascade, -- check once more | Mention in the doc ( Calling back models )
     CONSTRAINT fk_c_p FOREIGN KEY(ownerID) REFERENCES person(userID)
         on delete cascade on update cascade
 );
