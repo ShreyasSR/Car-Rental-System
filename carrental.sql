@@ -91,3 +91,19 @@ CREATE TABLE IF NOT EXISTS reservation(
     CONSTRAINT fk_r_c FOREIGN KEY(carID) REFERENCES car(carID)
         on delete cascade
 );
+INSERT INTO carrentalsystem.address (street, city, state, country, zip) VALUES ('22B-Bakers Street', 'London', 'London', 'England', 0);
+INSERT INTO carrentalsystem.address (street, city, state, country, zip) VALUES ('5/a, Modi Chawl, Station Rd, Santacruz (west)', 'Mumbai', 'Maharashtra', 'India', 400054);
+INSERT INTO carrentalsystem.address (street, city, state, country, zip) VALUES ('13, Karaneeswarar Pagoda St, Mylapore', 'Chennai', 'Tamil Nadu', 'India', 600004);
+INSERT INTO carrentalsystem.address (street, city, state, country, zip) VALUES ('7, B2-grd Floor, Rizvi Nagar, S.v Rd, Santacruz (west)', 'Mumbai', 'Maharashtra', 'India', 400054);
+INSERT INTO carrentalsystem.address (street, city, state, country, zip) VALUES ('A 102, Amargian Complex, L B S Marg, Opp S T Workshop, Thane (west)', 'Mumbai', 'Maharashtra', 'India', 400601);
+INSERT INTO carrentalsystem.address (street, city, state, country, zip) VALUES ('3683 Union Street', 'Seattle', 'Washington', 'United States', 98101);
+INSERT INTO carrentalsystem.address (street, city, state, country, zip) VALUES ('2119 Shinn Avenue', 'Pittsburgh', 'Pennsylvania', 'United States', 15222);
+
+-- INSERT INTO carrentalsystem.modelType (name, description, rate_by_hour, rate_by_km) VALUES ();
+
+-- INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES ();
+-- INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES ();
+-- INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES ();
+-- INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES ();
+-- INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES ();
+-- INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES ();
