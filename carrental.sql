@@ -146,6 +146,7 @@ INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES (2,2,"../image
 INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES (3,3,"../images/Tesla Model 3 White.jpg");
 INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES (3,4,"../images/Tesla Model 3 Red.jpg");
 
+
 SELECT * from car;
 SELECT * from person;
 SELECT * from modelType;
