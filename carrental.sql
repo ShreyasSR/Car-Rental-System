@@ -163,7 +163,7 @@ BEGIN
 	DROP TEMPORARY TABLE IF EXISTS tmp_availCars;
     CREATE TEMPORARY TABLE tmp_availCars
     SELECT carID FROM (SELECT * FROM car where car.modelID = model_ID) AS selectedCars 
-    WHERE selectedCars.carID NOT IN 
+    WHERE carID NOT IN 
     (SELECT carID FROM reservation where 
     (reservation.timein>time_in AND reservation.timeout > time_out) OR
     (reservation.timein<time_in AND reservation.timeout < time_out) OR 
@@ -197,7 +197,7 @@ DELIMITER ;
 SELECT * FROM car;
 
 -- Testing if it returns cars (no reservations yet_
-CALL numCarsAvailable(3,'2012-12-23 18:00:00','2012-12-23 19:00:00',@n);
+CALL numCarsAvailable(3,'2012-12-23 8:00:00','2012-12-23 9:00:00',@n);
 SELECT @n;
 SELECT * FROM tmp_availCars;
 
@@ -241,5 +241,19 @@ CALL request_reservation(3, 1, 1, 10, '2012-12-23 18:00:00','2012-12-23 19:00:00
 CALL request_reservation(2, 1, 1, 10, '2012-12-23 18:00:00','2012-12-23 19:00:00');
 CALL request_reservation(1, 4, 1, 10, '2012-12-23 18:00:00','2012-12-23 19:00:00');
 
+CALL request_reservation(1, 1, 1, 10, date("2022-04-12 17:24:01"),date("2022-04-12 18:24:01"));
+SELECT @time1 = date("2022-04-12 17:24:01");
+
 SELECT * from reservation;
 SELECT * from waitlist;
+SELECT * from tmp_availCars;
+SELECT @n;
+
+-- Deletes all rows
+DELETE FROM reservation;
+DELETE FROM waitlist;
+
+SELECT carID FROM reservation where 
+    (reservation.timein> date("2022-04-12 17:24:01") AND reservation.timeout > date("2022-04-12 18:24:01")) OR
+    (reservation.timein< date("2022-04-12 17:24:01") AND reservation.timeout < date("2022-04-12 18:24:01")) OR 
+    (reservation.timein< date("2022-04-12 17:24:01") AND reservation.timeout > date("2022-04-12 18:24:01"));
