@@ -14,12 +14,14 @@ USE carrentalsystem;
 -- );
 
 -- Don't change this order, it accounts for foreign key dependencies in the required order
-DROP TABLE waitlist;
-DROP TABLE car;
+
+
 DROP TABLE reservation;
+DROP TABLE car;
 DROP TABLE person;
 DROP TABLE address;
 DROP TABLE modelType;
+DROP TABLE waitlist;
 
 
 
@@ -93,8 +95,9 @@ CREATE TABLE IF NOT EXISTS reservation(
     rID int UNSIGNED NOT NULL AUTO_INCREMENT,
     userID int UNSIGNED NOT NULL,
     carID int UNSIGNED NOT NULL,
-    ratemode NUMERIC(2) UNSIGNED NOT NULL,
-    value numeric(6,2) not null,
+    rateMode NUMERIC(2) UNSIGNED NOT NULL,
+    val numeric(6,2) not null,
+    amount numeric(10,2) not null,
     timein TIMESTAMP not null,
     timeout timestamp not null,
     CONSTRAINT pk_r PRIMARY KEY(rID),
@@ -151,3 +154,107 @@ SELECT * from car;
 SELECT * from person;
 SELECT * from modelType;
 select * from address order by addressID;
+
+DROP PROCEDURE numCarsAvailable;
+
+DELIMITER $$
+CREATE PROCEDURE numCarsAvailable(IN model_ID INT, IN time_in TIMESTAMP, IN time_out TIMESTAMP, OUT num_cars INT)
+COMMENT 'Procedure to find the number of cars available for a particular model'
+BEGIN
+	DROP TEMPORARY TABLE IF EXISTS tmp_availCars;
+    CREATE TEMPORARY TABLE tmp_availCars
+    SELECT carID FROM (SELECT * FROM car where car.modelID = model_ID) AS selectedCars 
+    WHERE carID NOT IN 
+    (SELECT carID FROM reservation where 
+    (reservation.timein>time_in AND reservation.timeout > time_out) OR
+    (reservation.timein<time_in AND reservation.timeout < time_out) OR 
+    (reservation.timein<time_in AND reservation.timeout > time_out));
+    
+    -- Tried a outer join / left join to get all reserved & available cars for a given model, unidentified issues
+-- DROP TEMPORARY TABLE IF EXISTS tmp_availCars;
+--     CREATE TEMPORARY TABLE tmp_availCars
+-- 	SELECT t1.carID,modelID,timein,timeout
+--     FROM ((SELECT * FROM
+--      (SELECT * FROM car where car.modelID = model_ID) AS t1
+--      JOIN 
+--      (SELECT * FROM reservation) AS t2 ) )AS selectedCars;
+    -- WHERE selectedCars.carID NOT IN 
+--     (SELECT carID FROM reservation where 
+--     (reservation.timein>time_in AND reservation.timeout > time_out) OR
+--     (reservation.timein<time_in AND reservation.timeout < time_out) OR 
+--     (reservation.timein<time_in AND reservation.timeout > time_out));
+    
+    -- Returning a count of the available cars
+    SELECT count(carID) INTO num_cars FROM tmp_availCars;
+    
+    -- Select one carID only
+    -- SELECT selectedCars.carID into car_ID
+--     FROM (SELECT * FROM car where car.modelID = model_ID ) AS selectedCars
+--     WHERE selectedCars.carID NOT IN (SELECT carID FROM reservation)
+--     LIMIT 1;
+END $$
+
+DELIMITER ;
+SELECT * FROM car;
+
+-- Testing if it returns cars (no reservations yet_
+CALL numCarsAvailable(3,'2012-12-23 8:00:00','2012-12-23 9:00:00',@n);
+SELECT @n;
+SELECT * FROM tmp_availCars;
+
+DROP PROCEDURE request_reservation;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE 
+`request_reservation`(IN user_ID INT, 
+					IN model_ID INT UNSIGNED, 
+                    IN rateMode NUMERIC(2) UNSIGNED, 
+                    IN val NUMERIC(2) UNSIGNED, 
+                    IN time_IN TIMESTAMP, 
+                    IN time_out TIMESTAMP)
+ MODIFIES SQL DATA
+ DETERMINISTIC
+ SQL SECURITY INVOKER
+ COMMENT 'Procedure for user to request a reservation based on the car model'
+BEGIN
+CALL numCarsAvailable(model_ID,time_in,time_out,@n);
+SELECT carID INTO @selCarID from tmp_availCars LIMIT 1;
+SET @rateHour = (SELECT rate_by_hour from modelType WHERE modelID=model_ID); 
+SET @rateKm = (SELECT rate_by_km from modelType WHERE modelID=model_ID); 
+IF rateMode=0 THEN SET @amount=val*@rateHour;
+ELSE SET @amount = val*@rateKm;
+END IF;
+IF(@n>0)
+THEN
+	INSERT INTO carrentalsystem.reservation(userID,carID,rateMode,val,amount,timein,timeout)
+		VALUES (user_ID,@selCarID,rateMode,val,amount,time_in,time_out);
+ELSE
+INSERT INTO waitlist (userID, modelID, timein, timeout) VALUES (user_ID,model_ID,time_in,time_out);
+END IF;
+END $$
+
+
+DELIMITER ;
+
+-- Testing reservation
+-- request_reservation(IN user_ID INT, IN model_ID INT UNSIGNED, IN rateMode NUMERIC(2) UNSIGNED, IN val NUMERIC(2) UNSIGNED, IN time_IN TIMESTAMP, IN time_out TIMESTAMP)
+CALL request_reservation(3, 1, 1, 10, '2012-12-23 18:00:00','2012-12-23 19:00:00');
+CALL request_reservation(2, 1, 1, 10, '2012-12-23 18:00:00','2012-12-23 19:00:00');
+CALL request_reservation(1, 4, 1, 10, '2012-12-23 18:00:00','2012-12-23 19:00:00');
+
+CALL request_reservation(1, 1, 1, 10, date("2022-04-12 17:24:01"),date("2022-04-12 18:24:01"));
+SELECT @time1 = date("2022-04-12 17:24:01");
+
+SELECT * from reservation;
+SELECT * from waitlist;
+SELECT * from tmp_availCars;
+SELECT @n;
+
+-- Deletes all rows
+DELETE FROM reservation;
+DELETE FROM waitlist;
+
+SELECT carID FROM reservation where 
+    (reservation.timein> date("2022-04-12 17:24:01") AND reservation.timeout > date("2022-04-12 18:24:01")) OR
+    (reservation.timein< date("2022-04-12 17:24:01") AND reservation.timeout < date("2022-04-12 18:24:01")) OR 
+    (reservation.timein< date("2022-04-12 17:24:01") AND reservation.timeout > date("2022-04-12 18:24:01"));
