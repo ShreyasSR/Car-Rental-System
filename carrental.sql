@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS person(
     phone VARCHAR(15) NOT NULL,
     userName VARCHAR(30) NOT NULL,  
     pwd VARCHAR(225) NOT NULL,
-    gender ENUM('M','F','Other'),
+    gender ENUM('M','F','Other') NOT NULL,
     addressID INT UNSIGNED NOT NULL,
     CONSTRAINT pk_p PRIMARY KEY(userID),
     CONSTRAINT fk_p_a FOREIGN KEY(addressID) REFERENCES address(addressID) on delete restrict on update cascade,
@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS reservation(
     carID int UNSIGNED NOT NULL,
     rateMode NUMERIC(2) UNSIGNED NOT NULL,
     val numeric(6,2) not null,
-    amount numeric(10,2) not null,
+    -- amount numeric(10,2) not null, --removed as it's redundant
     timein TIMESTAMP not null,
     timeout timestamp not null,
     CONSTRAINT pk_r PRIMARY KEY(rID),
