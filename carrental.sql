@@ -159,9 +159,9 @@ BEGIN
     SELECT carID FROM (SELECT * FROM car where car.modelID = model_ID) AS selectedCars 
     WHERE carID NOT IN 
     (SELECT carID FROM reservation where ( 
-    ((`reservation`.`timein` > `time_in`) AND (`reservation`.`timeout` > `time_out`)) OR
-    ((`reservation`.`timein` < `time_in`) AND (`reservation`.`timeout` < `time_out`)) OR 
-    ((`reservation`.`timein` < `time_in`) AND (`reservation`.`timeout` > `time_out`))
+    ((`reservation`.`timein` > `time_in`) AND (`reservation`.`timein` < `time_out`) AND (`reservation`.`timeout` > `time_out`)) OR
+    ((`reservation`.`timein` < `time_in`) AND (`reservation`.`timeout` < `time_out`) AND (`reservation`.`timeout` > `time_in`)) OR 
+    ((`reservation`.`timein` < `time_in`) AND (`reservation`.`timeout` > `time_out`)) 
     ));
     SELECT count(carID) INTO num_cars FROM tmp_availCars;
 
@@ -169,6 +169,8 @@ BEGIN
     SET AUTOCOMMIT = 1;
 END $$
 DELIMITER ;
+
+
 
 -- Shreyas
 -- DELIMITER $$ -- Shouldn't we define transactions here, instead of procedures ?
@@ -212,7 +214,7 @@ DELIMITER ;
 SELECT * FROM car;
 
 -- Testing if it returns cars (no reservations yet_
-CALL numCarsAvailable(3,'2012-12-23 8:00:00','2012-12-23 9:00:00',@n);
+CALL numCarsAvailable(1,'2001-12-23 8:00:00','2001-12-23 9:00:00',@n);
 SELECT @n;
 SELECT * FROM tmp_availCars;
 
@@ -274,7 +276,15 @@ DELIMITER ;
 
 -- Testing reservation
 -- request_reservation(IN user_ID INT, IN model_ID INT UNSIGNED, IN rateMode NUMERIC(2) UNSIGNED, IN val NUMERIC(2) UNSIGNED, IN time_IN TIMESTAMP, IN time_out TIMESTAMP)
-CALL request_reservation(3, 1, 1, 10, '2012-12-23 18:00:00','2012-12-23 19:00:00');
+CALL request_reservation(1, 1, 1, 10, '2012-12-23 18:00:00','2012-12-23 19:00:00');
+-- Testing if it returns cars (after 
+CALL numCarsAvailable(1,'2012-12-23 18:10:00','2012-12-23 18:50:00',@n);
+SELECT @n;
+SELECT * FROM tmp_availCars;
+
+SELECT * FROM reservation;
+SELECT * FROM car;
+
 CALL request_reservation(2, 1, 1, 10, '2012-12-23 18:00:00','2012-12-23 19:00:00');
 CALL request_reservation(1, 4, 1, 10, '2012-12-23 18:00:00','2012-12-23 19:00:00');
 
