@@ -1,10 +1,12 @@
-
--- Reservation, Car, Address --> Swastik
--- Person, Waitlist, Model type --> Shreyas
-
--- CREATE DATABASE AND USE IT
-
--- CREATE DATABASE carrentalsystem;
+-- The sequence of SQL queries must be as follows.
+-- a. Create database.
+-- b. Use database.
+-- c. Create tables and views.
+-- d. Insert data in tables.
+-- e. DML operations like select, update, and delete.
+-- f. In the end, drop tables and database statements (commented form)
+-- g. All queries should be submitted in a single SQL file.
+-- h. For reference of SQL file format, check database files shared with you to use in sessions.
 USE carrentalsystem;
 
 
