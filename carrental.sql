@@ -155,13 +155,14 @@ INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES (3,4,"../image
 -- select * from address order by addressID;
 
 DROP PROCEDURE numCarsAvailable;
--- Check this --> 
-
 -- Swastik
 DELIMITER $$
 create definer=`root`@`localhost` PROCEDURE numCarsAvailable(IN model_ID INT, IN time_in TIMESTAMP, IN time_out TIMESTAMP, OUT num_cars INT)
 COMMENT 'Procedure to find the number of cars available for a particular model'
 BEGIN
+    SET AUTOCOMMIT = 0;
+    START TRANSACTION;
+
 	DROP TEMPORARY TABLE IF EXISTS tmp_availCars;
     CREATE TEMPORARY TABLE tmp_availCars
     SELECT carID FROM (SELECT * FROM car where car.modelID = model_ID) AS selectedCars 
@@ -171,6 +172,9 @@ BEGIN
     ((`reservation`.`timein` < `time_in`) AND (`reservation`.`timeout` < `time_out`)) OR 
     ((`reservation`.`timein` < `time_in`) AND (`reservation`.`timeout` > `time_out`))));
     SELECT count(carID) INTO num_cars FROM tmp_availCars;
+
+    COMMIT;
+    SET AUTOCOMMIT = 1;
 END $$
 DELIMITER ;
 
@@ -235,20 +239,26 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE
  SQL SECURITY INVOKER
  COMMENT 'Procedure for user to request a reservation based on the car model'
 BEGIN
-CALL numCarsAvailable(model_ID,time_in,time_out,@n);
-SELECT carID INTO @selCarID from tmp_availCars LIMIT 1;
-SET @rateHour = (SELECT rate_by_hour from modelType WHERE modelID=model_ID); 
-SET @rateKm = (SELECT rate_by_km from modelType WHERE modelID=model_ID); 
-IF rateMode=0 THEN SET @amount=val*@rateHour;
-ELSE SET @amount = val*@rateKm;
-END IF;
-IF(@n>0)
-THEN
-	INSERT INTO carrentalsystem.reservation(userID,carID,rateMode,val,timein,timeout)
-		VALUES (user_ID,@selCarID,rateMode,val,time_in,time_out);
-ELSE
-INSERT INTO waitlist (userID, modelID, timein, timeout) VALUES (user_ID,model_ID,time_in,time_out);
-END IF;
+    SET AUTOCOMMIT = 0;
+    START TRANSACTION;
+
+    CALL numCarsAvailable(model_ID,time_in,time_out,@n);
+    SELECT carID INTO @selCarID from tmp_availCars LIMIT 1;
+    SET @rateHour = (SELECT rate_by_hour from modelType WHERE modelID=model_ID); 
+    SET @rateKm = (SELECT rate_by_km from modelType WHERE modelID=model_ID); 
+    IF rateMode=0 THEN SET @amount=val*@rateHour;
+    ELSE SET @amount = val*@rateKm;
+    END IF;
+    IF(@n>0)
+    THEN
+        INSERT INTO carrentalsystem.reservation(userID,carID,rateMode,val,timein,timeout)
+            VALUES (user_ID,@selCarID,rateMode,val,time_in,time_out);
+    ELSE
+    INSERT INTO waitlist (userID, modelID, timein, timeout) VALUES (user_ID,model_ID,time_in,time_out);
+    END IF;
+
+    COMMIT;
+    SET AUTOCOMMIT = 1;
 END $$
 
 
