@@ -150,7 +150,7 @@ DELIMITER $$
 create definer=`root`@`localhost` PROCEDURE numCarsAvailable(IN model_ID INT, IN time_in TIMESTAMP, IN time_out TIMESTAMP, OUT num_cars INT)
 COMMENT 'Procedure to find the number of cars available for a particular model'
 BEGIN
-    SET AUTOCOMMIT = 0;
+    -- SET AUTOCOMMIT = 0;
     START TRANSACTION;
 
 	DROP TEMPORARY TABLE IF EXISTS tmp_availCars;
@@ -165,7 +165,7 @@ BEGIN
     SELECT count(carID) INTO num_cars FROM tmp_availCars;
 
     COMMIT;
-    SET AUTOCOMMIT = 1;
+    -- SET AUTOCOMMIT = 1;
 END $$
 DELIMITER ;
 
@@ -194,7 +194,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE
  SQL SECURITY INVOKER
  COMMENT 'Procedure for user to request a reservation based on the car model'
 BEGIN
-    SET AUTOCOMMIT = 0;
+    -- SET AUTOCOMMIT = 0;
     START TRANSACTION;
 
     CALL numCarsAvailable(model_ID,time_in,time_out,@n);
@@ -208,7 +208,7 @@ BEGIN
     END IF;
 
     COMMIT;
-    SET AUTOCOMMIT = 1;
+    -- SET AUTOCOMMIT = 1;
 END $$
 DELIMITER ;
 
@@ -270,7 +270,7 @@ DROP PROCEDURE IF EXISTS `check_waitlist`;
         Select count(*)  from waitlist into n;
         set i = 0;
 
-        SET AUTOCOMMIT = 0;
+        -- SET AUTOCOMMIT = 0;
         START TRANSACTION;
 
         while i<n do
@@ -287,7 +287,7 @@ DROP PROCEDURE IF EXISTS `check_waitlist`;
         end while;
 
         COMMIT;
-        SET AUTOCOMMIT = 1;
+        -- SET AUTOCOMMIT = 1;
     END$$
     DELIMITER ;
 
