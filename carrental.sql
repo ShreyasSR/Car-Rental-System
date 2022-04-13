@@ -15,7 +15,7 @@ DROP TABLE IF EXISTS waitlist;
 DROP TABLE IF EXISTS car;
 DROP TABLE IF EXISTS person;
 DROP TABLE IF EXISTS modelType;
-DROP TABLE IF EXISTS address;
+DROP TABLE IF EXISTS address;   
 
 CREATE TABLE IF NOT EXISTS address(
     addressID INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -213,7 +213,44 @@ BEGIN
 END $$
 DELIMITER ;
 
+-- check_waitlist` | TRANSACTION
+DROP PROCEDURE IF EXISTS `check_waitlist`;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE 
+`check_waitlist`()
+MODIFIES SQL DATA
+SQL SECURITY INVOKER
+COMMENT 'Procedure to check waitlist and add to reservation'
+BEGIN
+    SET AUTOCOMMIT = 0;
+    START TRANSACTION;
+    
+    DECLARE n INT DEFAULT 0;    
+    DECLARE i INT DEFAULT 0;
+    Select count(*)  from waitlist into n;
+    set i = 0;
+    while i<n do
+        CALL numCarsAvailable(modelID,timein,timeout,@n);
+        if(n>0)
+        then
+            select waitID into @wID from carrentalsystem.waitlist LIMIT i,1;
+            select carID into @selCarID from tmp_availCars LIMIT 1;
+            INSERT into carrentalsystem.reservation(userID,carID,rateMode,val,timein,timeout)
+                Select (userID,@selCarID,rateMode,val,timein, timeout) from carrentalsystem.waitlist LIMIT i,1;
+            DELETE from waitlist where waitID=@wID;
+        end if;
+    set i = i + 1;
+    end while;
+
+    COMMIT;
+    SET AUTOCOMMIT = 1;
+END$$
+DELIMITER ;
+
+-- amount | FUNCTION
 DROP FUNCTION IF EXISTS `amount`;
+
 DELIMITER $$
 CREATE 
     DEFINER=`root`@`localhost`
