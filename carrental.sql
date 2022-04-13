@@ -1,30 +1,21 @@
--- CREATE DATABASE carrentalsystem;
+
 -- Reservation, Car, Address --> Swastik
 -- Person, Waitlist, Model type --> Shreyas
--- CREATE DATABASE carrentalsystem;
 
+-- CREATE DATABASE AND USE IT
+
+-- CREATE DATABASE carrentalsystem;
 USE carrentalsystem;
 
--- CREATE TABLE IF NOT EXISTS address(
---     addressID VARCHAR(50),
---     street VARCHAR(100),
---     city VARCHAR(30),
---     state VARCHAR(30),
---     country VARCHAR(30),
--- );
-
--- Don't change this order, it accounts for foreign key dependencies in the required order
-
+-- DROP TABLES
+-- Don't change this order, it accounts for foreign key dependencies
 
 DROP TABLE reservation;
+DROP TABLE waitlist;
 DROP TABLE car;
 DROP TABLE person;
-DROP TABLE address;
 DROP TABLE modelType;
-DROP TABLE waitlist;
-
-
-
+DROP TABLE address;
 
 CREATE TABLE IF NOT EXISTS address(
     addressID INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -224,7 +215,8 @@ CALL numCarsAvailable(3,'2012-12-23 8:00:00','2012-12-23 9:00:00',@n);
 SELECT @n;
 SELECT * FROM tmp_availCars;
 
-DROP PROCEDURE request_reservation;
+
+DROP PROCEDURE IF EXISTS request_reservation;
 
 DELIMITER $$
 CREATE DEFINER=`root`@`localhost` PROCEDURE 
@@ -244,11 +236,11 @@ BEGIN
 
     CALL numCarsAvailable(model_ID,time_in,time_out,@n);
     SELECT carID INTO @selCarID from tmp_availCars LIMIT 1;
-    SET @rateHour = (SELECT rate_by_hour from modelType WHERE modelID=model_ID); 
-    SET @rateKm = (SELECT rate_by_km from modelType WHERE modelID=model_ID); 
-    IF rateMode=0 THEN SET @amount=val*@rateHour;
-    ELSE SET @amount = val*@rateKm;
-    END IF;
+    -- SET @rateHour = (SELECT rate_by_hour from modelType WHERE modelID=model_ID); 
+    -- SET @rateKm = (SELECT rate_by_km from modelType WHERE modelID=model_ID); 
+    -- IF rateMode=0 THEN SET @amount=val*@rateHour;
+    -- ELSE SET @amount = val*@rateKm;
+    -- END IF;
     IF(@n>0)
     THEN
         INSERT INTO carrentalsystem.reservation(userID,carID,rateMode,val,timein,timeout)
@@ -260,8 +252,28 @@ BEGIN
     COMMIT;
     SET AUTOCOMMIT = 1;
 END $$
+DELIMITER ;
 
-
+DROP FUNCTION IF EXISTS amount;
+DELIMITER $$
+CREATE 
+    DEFINER=`root`@`localhost`
+    FUNCTION `amount` (model_ID INT UNSIGNED, rateMode ENUM('Hour','KM'), val NUMERIC(6,2))
+    RETURNS NUMERIC(17,2)
+    COMMENT 'Calculates the cost of renting a car'
+    LANGUAGE SQL
+    DETERMINISTIC
+    READS SQL DATA
+    SQL SECURITY INVOKER
+BEGIN
+    DECLARE return_amount NUMERIC(17,2);
+    SET @rateHour = (SELECT rate_by_hour from modelType WHERE modelID=model_ID); 
+    SET @rateKm = (SELECT rate_by_km from modelType WHERE modelID=model_ID); 
+    IF rateMode='Hour' THEN SET return_amount=val*@rateHour;
+    ELSE SET return_amount = val*@rateKm;
+    END IF;
+    RETURN return_amount;
+END $$
 DELIMITER ;
 
 -- Testing reservation
