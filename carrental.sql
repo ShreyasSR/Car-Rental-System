@@ -139,7 +139,7 @@ INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES (3,4,"../image
 
 
 -- Procedures (which have transactions enclosed in them for concurrency purposes)
-
+SET AUTOCOMMIT = 0;
 
 -- numCarsAvailable returns number of cars available for a particular model given the timein and time out
 -- i.e, the start and end times of the reservation, and also creates a temporary table to list all the cars
@@ -151,6 +151,17 @@ create definer=`root`@`localhost` PROCEDURE numCarsAvailable(IN model_ID INT, IN
 COMMENT 'Procedure to find the number of cars available for a particular model'
 BEGIN
     -- SET AUTOCOMMIT = 0;
+        DECLARE exit handler for sqlexception
+    BEGIN
+    -- ERROR
+    ROLLBACK;
+    END;
+   
+    DECLARE exit handler for sqlwarning
+    BEGIN
+        -- WARNING
+    ROLLBACK;
+    END;
     START TRANSACTION;
 
 	DROP TEMPORARY TABLE IF EXISTS tmp_availCars;
@@ -195,6 +206,18 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE
  COMMENT 'Procedure for user to request a reservation based on the car model'
 BEGIN
     -- SET AUTOCOMMIT = 0;
+
+    DECLARE exit handler for sqlexception
+    BEGIN
+    -- ERROR
+    ROLLBACK;
+    END;
+   
+    DECLARE exit handler for sqlwarning
+    BEGIN
+        -- WARNING
+    ROLLBACK;
+    END;
     START TRANSACTION;
 
     CALL numCarsAvailable(model_ID,time_in,time_out,@n);
@@ -270,6 +293,17 @@ DROP PROCEDURE IF EXISTS `check_waitlist`;
         Select count(*)  from waitlist into n;
         set i = 0;
 
+    DECLARE exit handler for sqlexception
+    BEGIN
+    -- ERROR
+    ROLLBACK;
+    END;
+   
+    DECLARE exit handler for sqlwarning
+    BEGIN
+        -- WARNING
+    ROLLBACK;
+    END;
         -- SET AUTOCOMMIT = 0;
         START TRANSACTION;
 
