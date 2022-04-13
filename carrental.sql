@@ -32,10 +32,9 @@ CREATE TABLE IF NOT EXISTS address(
     city VARCHAR(100),
     state VARCHAR(100),
     country VARCHAR(100),
-    zip INT UNSIGNED NOT NULL,
     CONSTRAINT pk_a PRIMARY KEY(addressID),
     -- To prevent duplicate addresses
-    CONSTRAINT unique_add UNIQUE(street,city,state,country,zip) 
+    CONSTRAINT unique_add UNIQUE(street,city,state,country) 
 );
 
 CREATE TABLE IF NOT EXISTS person(
@@ -70,7 +69,8 @@ CREATE TABLE IF NOT EXISTS waitlist(
     modelID INT UNSIGNED NOT NULL,
     timein timestamp NOT NULL,
     timeout timestamp NOT NULL,
-    
+    rateMode ENUM('Hour','KM') NOT NULL ,
+    val numeric(6,2) NOT NULL,
     CONSTRAINT pk_w PRIMARY KEY(waitID),
     CONSTRAINT fk_w_p FOREIGN KEY(userID) REFERENCES person(userID)
         on delete cascade on update cascade,
@@ -95,7 +95,7 @@ CREATE TABLE IF NOT EXISTS reservation(
     rID int UNSIGNED NOT NULL AUTO_INCREMENT,
     userID int UNSIGNED NOT NULL,
     carID int UNSIGNED NOT NULL,
-    rateMode NUMERIC(2) UNSIGNED NOT NULL,
+    rateMode ENUM('Hour','KM') NOT NULL,
     val numeric(6,2) not null,
     -- amount numeric(10,2) not null, --removed as it's redundant
     timein TIMESTAMP not null,
@@ -110,13 +110,13 @@ CREATE TABLE IF NOT EXISTS reservation(
  
 
 -- Address entries
-INSERT INTO carrentalsystem.address (street, city, state, country, zip) VALUES ('22B-Bakers Street', 'London', 'London', 'England', 0);
-INSERT INTO carrentalsystem.address (street, city, state, country, zip) VALUES ('5/a, Modi Chawl, Station Rd, Santacruz (west)', 'Mumbai', 'Maharashtra', 'India', 400054);
-INSERT INTO carrentalsystem.address (street, city, state, country, zip) VALUES ('13, Karaneeswarar Pagoda St, Mylapore', 'Chennai', 'Tamil Nadu', 'India', 600004);
-INSERT INTO carrentalsystem.address (street, city, state, country, zip) VALUES ('7, B2-grd Floor, Rizvi Nagar, S.v Rd, Santacruz (west)', 'Mumbai', 'Maharashtra', 'India', 400054);
-INSERT INTO carrentalsystem.address (street, city, state, country, zip) VALUES ('A 102, Amargian Complex, L B S Marg, Opp S T Workshop, Thane (west)', 'Mumbai', 'Maharashtra', 'India', 400601);
-INSERT INTO carrentalsystem.address (street, city, state, country, zip) VALUES ('3683 Union Street', 'Seattle', 'Washington', 'United States', 98101);
-INSERT INTO carrentalsystem.address (street, city, state, country, zip) VALUES ('2119 Shinn Avenue', 'Hanau', 'Hesse', 'Germany', 63450);
+INSERT INTO carrentalsystem.address (street, city, state, country) VALUES ('22B-Bakers Street', 'London', 'London', 'England');
+INSERT INTO carrentalsystem.address (street, city, state, country) VALUES ('5/a, Modi Chawl, Station Rd, Santacruz (west)', 'Mumbai', 'Maharashtra', 'India');
+INSERT INTO carrentalsystem.address (street, city, state, country) VALUES ('13, Karaneeswarar Pagoda St, Mylapore', 'Chennai', 'Tamil Nadu', 'India');
+INSERT INTO carrentalsystem.address (street, city, state, country) VALUES ('7, B2-grd Floor, Rizvi Nagar, S.v Rd, Santacruz (west)', 'Mumbai', 'Maharashtra', 'India');
+INSERT INTO carrentalsystem.address (street, city, state, country) VALUES ('A 102, Amargian Complex, L B S Marg, Opp S T Workshop, Thane (west)', 'Mumbai', 'Maharashtra', 'India');
+INSERT INTO carrentalsystem.address (street, city, state, country) VALUES ('3683 Union Street', 'Seattle', 'Washington', 'United States');
+INSERT INTO carrentalsystem.address (street, city, state, country) VALUES ('2119 Shinn Avenue', 'Hanau', 'Hesse', 'Germany');
 
 
 -- Person Entries
@@ -157,24 +157,9 @@ INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES (3,4,"../image
 DROP PROCEDURE numCarsAvailable;
 -- Check this --> 
 
--- DELIMITER $$
--- create definer=`swastik`@`localhost` PROCEDURE numCarsAvailable(IN model_ID INT, IN time_in TIMESTAMP, IN time_out TIMESTAMP, OUT num_cars INT)
--- COMMENT 'Procedure to find the number of cars available for a particular model'
--- BEGIN
--- 	DROP TEMPORARY TABLE IF EXISTS tmp_availCars;
---     CREATE TEMPORARY TABLE tmp_availCars
---     SELECT carID FROM (SELECT * FROM car where car.modelID = model_ID) AS selectedCars 
---     WHERE carID NOT IN 
---     (SELECT carID FROM reservation where ( 
---     ((`reservation`.`timein` > `time_in`) AND (`reservation`.`timeout` > `time_out`)) OR
---     ((`reservation`.`timein` < `time_in`) AND (`reservation`.`timeout` < `time_out`)) OR 
---     ((`reservation`.`timein` < `time_in`) AND (`reservation`.`timeout` > `time_out`))));
---     SELECT count(carID) INTO num_cars FROM tmp_availCars;
--- END $$
--- DELIMITER ;
-
-DELIMITER $$ -- Shouldn't we define transactions here, instead of procedures ?
-CREATE PROCEDURE numCarsAvailable(IN model_ID INT, IN time_in TIMESTAMP, IN time_out TIMESTAMP, OUT num_cars INT)
+-- Swastik
+DELIMITER $$
+create definer=`root`@`localhost` PROCEDURE numCarsAvailable(IN model_ID INT, IN time_in TIMESTAMP, IN time_out TIMESTAMP, OUT num_cars INT)
 COMMENT 'Procedure to find the number of cars available for a particular model'
 BEGIN
 	DROP TEMPORARY TABLE IF EXISTS tmp_availCars;
@@ -182,33 +167,50 @@ BEGIN
     SELECT carID FROM (SELECT * FROM car where car.modelID = model_ID) AS selectedCars 
     WHERE carID NOT IN 
     (SELECT carID FROM reservation where ( 
-    (`reservation`.`timein` > `time_in` AND `reservation`.`timeout` > `time_out`) OR
-    (`reservation`.`timein` < `time_in` AND `reservation`.`timeout` < `time_out`) OR 
-    (`reservation`.`timein` < `time_in` AND `reservation`.`timeout` > `time_out`)));
-    
-    -- Tried a outer join / left join to get all reserved & available cars for a given model, unidentified issues
--- DROP TEMPORARY TABLE IF EXISTS tmp_availCars;
---     CREATE TEMPORARY TABLE tmp_availCars
--- 	SELECT t1.carID,modelID,timein,timeout
---     FROM ((SELECT * FROM
---      (SELECT * FROM car where car.modelID = model_ID) AS t1
---      JOIN 
---      (SELECT * FROM reservation) AS t2 ) )AS selectedCars;
-    -- WHERE selectedCars.carID NOT IN 
---     (SELECT carID FROM reservation where 
---     (reservation.timein>time_in AND reservation.timeout > time_out) OR
---     (reservation.timein<time_in AND reservation.timeout < time_out) OR 
---     (reservation.timein<time_in AND reservation.timeout > time_out));
-    
-    -- Returning a count of the available cars
+    ((`reservation`.`timein` > `time_in`) AND (`reservation`.`timeout` > `time_out`)) OR
+    ((`reservation`.`timein` < `time_in`) AND (`reservation`.`timeout` < `time_out`)) OR 
+    ((`reservation`.`timein` < `time_in`) AND (`reservation`.`timeout` > `time_out`))));
     SELECT count(carID) INTO num_cars FROM tmp_availCars;
-    
-    -- Select one carID only
-    -- SELECT selectedCars.carID into car_ID
---     FROM (SELECT * FROM car where car.modelID = model_ID ) AS selectedCars
---     WHERE selectedCars.carID NOT IN (SELECT carID FROM reservation)
---     LIMIT 1;
 END $$
+DELIMITER ;
+
+-- Shreyas
+-- DELIMITER $$ -- Shouldn't we define transactions here, instead of procedures ?
+-- CREATE PROCEDURE numCarsAvailable(IN model_ID INT, IN time_in TIMESTAMP, IN time_out TIMESTAMP, OUT num_cars INT)
+-- COMMENT 'Procedure to find the number of cars available for a particular model'
+-- BEGIN
+-- 	DROP TEMPORARY TABLE IF EXISTS tmp_availCars;
+--     CREATE TEMPORARY TABLE tmp_availCars
+--     SELECT carID FROM (SELECT * FROM car where car.modelID = model_ID) AS selectedCars 
+--     WHERE carID NOT IN 
+--     (SELECT carID FROM reservation where ( 
+--     (`reservation`.`timein` > `time_in` AND `reservation`.`timeout` > `time_out`) OR
+--     (`reservation`.`timein` < `time_in` AND `reservation`.`timeout` < `time_out`) OR 
+--     (`reservation`.`timein` < `time_in` AND `reservation`.`timeout` > `time_out`)));
+--     
+--     -- Tried a outer join / left join to get all reserved & available cars for a given model, unidentified issues
+-- -- DROP TEMPORARY TABLE IF EXISTS tmp_availCars;
+-- --     CREATE TEMPORARY TABLE tmp_availCars
+-- -- 	SELECT t1.carID,modelID,timein,timeout
+-- --     FROM ((SELECT * FROM
+-- --      (SELECT * FROM car where car.modelID = model_ID) AS t1
+-- --      JOIN 
+-- --      (SELECT * FROM reservation) AS t2 ) )AS selectedCars;
+--     -- WHERE selectedCars.carID NOT IN 
+-- --     (SELECT carID FROM reservation where 
+-- --     (reservation.timein>time_in AND reservation.timeout > time_out) OR
+-- --     (reservation.timein<time_in AND reservation.timeout < time_out) OR 
+-- --     (reservation.timein<time_in AND reservation.timeout > time_out));
+--     
+--     -- Returning a count of the available cars
+--     SELECT count(carID) INTO num_cars FROM tmp_availCars;
+--     
+--     -- Select one carID only
+--     -- SELECT selectedCars.carID into car_ID
+-- --     FROM (SELECT * FROM car where car.modelID = model_ID ) AS selectedCars
+-- --     WHERE selectedCars.carID NOT IN (SELECT carID FROM reservation)
+-- --     LIMIT 1;
+-- END $$
 
 DELIMITER ;
 SELECT * FROM car;
