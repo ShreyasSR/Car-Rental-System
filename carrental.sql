@@ -10,12 +10,12 @@ USE carrentalsystem;
 -- DROP TABLES
 -- Don't change this order, it accounts for foreign key dependencies
 
-DROP TABLE reservation;
-DROP TABLE waitlist;
-DROP TABLE car;
-DROP TABLE person;
-DROP TABLE modelType;
-DROP TABLE address;
+DROP TABLE IF EXISTS reservation;
+DROP TABLE IF EXISTS waitlist;
+DROP TABLE IF EXISTS car;
+DROP TABLE IF EXISTS person;
+DROP TABLE IF EXISTS modelType;
+DROP TABLE IF EXISTS address;
 
 CREATE TABLE IF NOT EXISTS address(
     addressID INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -101,13 +101,20 @@ CREATE TABLE IF NOT EXISTS reservation(
  
 
 -- Address entries
-INSERT INTO carrentalsystem.address (street, city, state, country) VALUES ('22B-Bakers Street', 'London', 'London', 'England');
-INSERT INTO carrentalsystem.address (street, city, state, country) VALUES ('5/a, Modi Chawl, Station Rd, Santacruz (west)', 'Mumbai', 'Maharashtra', 'India');
-INSERT INTO carrentalsystem.address (street, city, state, country) VALUES ('13, Karaneeswarar Pagoda St, Mylapore', 'Chennai', 'Tamil Nadu', 'India');
-INSERT INTO carrentalsystem.address (street, city, state, country) VALUES ('7, B2-grd Floor, Rizvi Nagar, S.v Rd, Santacruz (west)', 'Mumbai', 'Maharashtra', 'India');
-INSERT INTO carrentalsystem.address (street, city, state, country) VALUES ('A 102, Amargian Complex, L B S Marg, Opp S T Workshop, Thane (west)', 'Mumbai', 'Maharashtra', 'India');
-INSERT INTO carrentalsystem.address (street, city, state, country) VALUES ('3683 Union Street', 'Seattle', 'Washington', 'United States');
-INSERT INTO carrentalsystem.address (street, city, state, country) VALUES ('2119 Shinn Avenue', 'Hanau', 'Hesse', 'Germany');
+INSERT INTO carrentalsystem.address (street, city, state, country) 
+    VALUES ('22B-Bakers Street', 'London', 'London', 'England');
+INSERT INTO carrentalsystem.address (street, city, state, country) 
+    VALUES ('5/a, Modi Chawl, Station Rd, Santacruz (west)', 'Mumbai', 'Maharashtra', 'India');
+INSERT INTO carrentalsystem.address (street, city, state, country) 
+    VALUES ('13, Karaneeswarar Pagoda St, Mylapore', 'Chennai', 'Tamil Nadu', 'India');
+INSERT INTO carrentalsystem.address (street, city, state, country) 
+    VALUES ('7, B2-grd Floor, Rizvi Nagar, S.v Rd, Santacruz (west)', 'Mumbai', 'Maharashtra', 'India');
+INSERT INTO carrentalsystem.address (street, city, state, country) 
+    VALUES ('A 102, Amargian Complex, L B S Marg, Opp S T Workshop, Thane (west)', 'Mumbai', 'Maharashtra', 'India');
+INSERT INTO carrentalsystem.address (street, city, state, country) 
+    VALUES ('3683 Union Street', 'Seattle', 'Washington', 'United States');
+INSERT INTO carrentalsystem.address (street, city, state, country) 
+    VALUES ('2119 Shinn Avenue', 'Hanau', 'Hesse', 'Germany');
 
 
 -- Person Entries
@@ -139,14 +146,11 @@ INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES (2,2,"../image
 INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES (3,3,"../images/Tesla Model 3 White.jpg");
 INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES (3,4,"../images/Tesla Model 3 Red.jpg");
 
+-- Procedures and Functions
 
--- SELECT * from car;
--- SELECT * from person;
--- SELECT * from modelType;
--- select * from address order by addressID;
+-- numCarsAvailable
+DROP PROCEDURE IF EXISTS numCarsAvailable;
 
-DROP PROCEDURE numCarsAvailable;
--- Swastik
 DELIMITER $$
 create definer=`root`@`localhost` PROCEDURE numCarsAvailable(IN model_ID INT, IN time_in TIMESTAMP, IN time_out TIMESTAMP, OUT num_cars INT)
 COMMENT 'Procedure to find the number of cars available for a particular model'
@@ -170,53 +174,12 @@ BEGIN
 END $$
 DELIMITER ;
 
--- Shreyas
--- DELIMITER $$ -- Shouldn't we define transactions here, instead of procedures ?
--- CREATE PROCEDURE numCarsAvailable(IN model_ID INT, IN time_in TIMESTAMP, IN time_out TIMESTAMP, OUT num_cars INT)
--- COMMENT 'Procedure to find the number of cars available for a particular model'
--- BEGIN
--- 	DROP TEMPORARY TABLE IF EXISTS tmp_availCars;
---     CREATE TEMPORARY TABLE tmp_availCars
---     SELECT carID FROM (SELECT * FROM car where car.modelID = model_ID) AS selectedCars 
---     WHERE carID NOT IN 
---     (SELECT carID FROM reservation where ( 
---     (`reservation`.`timein` > `time_in` AND `reservation`.`timeout` > `time_out`) OR
---     (`reservation`.`timein` < `time_in` AND `reservation`.`timeout` < `time_out`) OR 
---     (`reservation`.`timein` < `time_in` AND `reservation`.`timeout` > `time_out`)));
---     
---     -- Tried a outer join / left join to get all reserved & available cars for a given model, unidentified issues
--- -- DROP TEMPORARY TABLE IF EXISTS tmp_availCars;
--- --     CREATE TEMPORARY TABLE tmp_availCars
--- -- 	SELECT t1.carID,modelID,timein,timeout
--- --     FROM ((SELECT * FROM
--- --      (SELECT * FROM car where car.modelID = model_ID) AS t1
--- --      JOIN 
--- --      (SELECT * FROM reservation) AS t2 ) )AS selectedCars;
---     -- WHERE selectedCars.carID NOT IN 
--- --     (SELECT carID FROM reservation where 
--- --     (reservation.timein>time_in AND reservation.timeout > time_out) OR
--- --     (reservation.timein<time_in AND reservation.timeout < time_out) OR 
--- --     (reservation.timein<time_in AND reservation.timeout > time_out));
---     
---     -- Returning a count of the available cars
---     SELECT count(carID) INTO num_cars FROM tmp_availCars;
---     
---     -- Select one carID only
---     -- SELECT selectedCars.carID into car_ID
--- --     FROM (SELECT * FROM car where car.modelID = model_ID ) AS selectedCars
--- --     WHERE selectedCars.carID NOT IN (SELECT carID FROM reservation)
--- --     LIMIT 1;
--- END $$
-
-DELIMITER ;
-SELECT * FROM car;
-
 -- Testing if it returns cars (no reservations yet_
-CALL numCarsAvailable(3,'2012-12-23 8:00:00','2012-12-23 9:00:00',@n);
-SELECT @n;
-SELECT * FROM tmp_availCars;
+-- CALL numCarsAvailable(3,'2012-12-23 8:00:00','2012-12-23 9:00:00',@n);
+-- SELECT @n;
+-- SELECT * FROM tmp_availCars;
 
-
+-- request_reservation | TRANSACTION
 DROP PROCEDURE IF EXISTS request_reservation;
 
 DELIMITER $$
@@ -250,7 +213,7 @@ BEGIN
 END $$
 DELIMITER ;
 
-DROP FUNCTION IF EXISTS amount;
+DROP FUNCTION IF EXISTS `amount`;
 DELIMITER $$
 CREATE 
     DEFINER=`root`@`localhost`
@@ -292,5 +255,5 @@ DELETE FROM waitlist;
 
 SELECT carID FROM reservation where 
     (reservation.timein> date("2022-04-12 17:24:01") AND reservation.timeout > date("2022-04-12 18:24:01")) OR
-    (reservation.timein< date("2022-04-12 17:24:01") AND reservation.timeout < date("2022-04-12 18:24:01")) OR 
+    (reservation.timein< date("2022-04-12 17:24:01") AND reservation.timeout < date("2022  -04-12 18:24:01")) OR 
     (reservation.timein< date("2022-04-12 17:24:01") AND reservation.timeout > date("2022-04-12 18:24:01"));
