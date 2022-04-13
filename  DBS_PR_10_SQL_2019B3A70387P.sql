@@ -6,16 +6,14 @@
 -- e. DML operations like select, update, and delete.
 -- f. In the end, drop tables and database statements (commented form)
 -- g. All queries should be submitted in a single SQL file.
--- h. For reference of SQL file format, check database files shared with you to use in sessions.
+
+-- a. Create database.
+CREATE DATABASE IF NOT EXISTS carrentalsystem;
+-- b. Use database.
 USE carrentalsystem;
 
 
-DROP TABLE IF EXISTS reservation;
-DROP TABLE IF EXISTS waitlist;
-DROP TABLE IF EXISTS car;
-DROP TABLE IF EXISTS person;
-DROP TABLE IF EXISTS modelType;
-DROP TABLE IF EXISTS address;
+-- c. Create tables and views.
 
 -- Table creations
 CREATE TABLE IF NOT EXISTS address(
@@ -89,7 +87,6 @@ CREATE TABLE IF NOT EXISTS reservation(
     carID int UNSIGNED NOT NULL,
     rateMode ENUM('Hour','KM') NOT NULL,
     val numeric(6,2) not null,
-    -- amount numeric(10,2) not null, --removed as it's redundant
     timein TIMESTAMP not null,
     timeout timestamp not null,
     CONSTRAINT pk_r PRIMARY KEY(rID),
@@ -100,7 +97,7 @@ CREATE TABLE IF NOT EXISTS reservation(
 );
 
  
- -- Inserting values
+-- d. Insert data in tables.
 
 -- -- Address entries
 INSERT INTO carrentalsystem.address (street, city, state, country) VALUES ('22B-Bakers Street', 'London', 'London', 'England');
@@ -139,9 +136,9 @@ INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES (2,2,"../image
 INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES (3,3,"../images/Tesla Model 3 White.jpg");
 INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES (3,4,"../images/Tesla Model 3 Red.jpg");
 
+-- e. DML operations like select, update, and delete.
 
 -- Procedures (which have transactions enclosed in them for concurrency purposes)
-
 
 -- numCarsAvailable returns number of cars available for a particular model given the timein and time out
 -- i.e, the start and end times of the reservation, and also creates a temporary table to list all the cars
@@ -304,3 +301,14 @@ BEGIN
     CALL check_waitlist;
 END$$
 DELIMITER ;
+
+-- f. In the end, drop tables and database statements (commented form)
+
+-- DROP TABLE IF EXISTS reservation;
+-- DROP TABLE IF EXISTS waitlist;
+-- DROP TABLE IF EXISTS car;
+-- DROP TABLE IF EXISTS person;
+-- DROP TABLE IF EXISTS modelType;
+-- DROP TABLE IF EXISTS address;
+
+-- DROP DATABASE IF EXISTS carrentalsystem;
