@@ -242,8 +242,8 @@ ELSE SET @amount = val*@rateKm;
 END IF;
 IF(@n>0)
 THEN
-	INSERT INTO carrentalsystem.reservation(userID,carID,rateMode,val,amount,timein,timeout)
-		VALUES (user_ID,@selCarID,rateMode,val,amount,time_in,time_out);
+	INSERT INTO carrentalsystem.reservation(userID,carID,rateMode,val,timein,timeout)
+		VALUES (user_ID,@selCarID,rateMode,val,time_in,time_out);
 ELSE
 INSERT INTO waitlist (userID, modelID, timein, timeout) VALUES (user_ID,model_ID,time_in,time_out);
 END IF;
