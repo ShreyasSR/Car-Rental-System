@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS person(
     
 CREATE TABLE IF NOT EXISTS modelType(
     modelID INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    name VARCHAR(50) NOT NULL DEFAULT '',
+     name VARCHAR(50) NOT NULL DEFAULT '',
     description VARCHAR(1000) DEFAULT '',
     rate_by_hour INT UNSIGNED NOT NULL,
     rate_by_km INT UNSIGNED NOT NULL,
@@ -134,7 +134,6 @@ INSERT INTO carrentalsystem.person(firstName, lastName, email, phone, userName, 
 INSERT INTO carrentalsystem.modelType (name, description, rate_by_hour, rate_by_km) VALUES ('Maruti Swift Dzire','4-seater Available in White, Gray & Blue Colours',120,11);
 INSERT INTO carrentalsystem.modelType (name, description, rate_by_hour, rate_by_km) VALUES ('Maruti Ertiga','7-seater, Available in White, Silver, Red, Gray & Blue Colours',170,17);
 INSERT INTO carrentalsystem.modelType (name, description, rate_by_hour, rate_by_km) VALUES ('Tesla Model 3', '5-seater Available in Black, White, Silver, Red, Gray & Blue Colours',150,15);
-
 INSERT INTO carrentalsystem.modelType (name, description, rate_by_hour, rate_by_km) VALUES ('Ford Mustang','The current Mustang arrived in 2015, and brought with it a new range of engine choices. The 3.7L V6 became the base engine; it’s good for a not-at-all-shabby 300 horsepower. Next up is a 2.3L, turbocharged four-cylinder that makes 310 horsepower. Yes, only four cylinders, but it sprints from zero to 60 in less than six seconds! Topping the range is a 5.0L V8 good for over 400 horsepower. Transmission choices include a six-speed manual or an automatic with paddle shifters.', 600,10 );
 INSERT INTO carrentalsystem.modelType (name, description, rate_by_hour, rate_by_km) VALUES ('Chevrolet Camaro', 'The Camaro is available both as a rear-wheel-drive coupe and a convertible, and while both have a backseat, it probably works best as a shelf for your groceries. Before the 2016 refresh, the LS and LT trims got a 3.6L V6 rated at 312 horsepower, while the SS was powered by a mighty 426-horsepower,  6.2L V8. And if that wasn’t enough, for 2014, Chevy unveiled a Z/28 Camaro that packs a huge 7.0L V8 from the Corvette.',1200,20);
 INSERT INTO carrentalsystem.modelType (name, description, rate_by_hour, rate_by_km) VALUES ('Dodge Challenger','The Challenger is Dodge’s flagship enthusiast vehicle. But is it a muscle car or is it a sports car? It has certainly got the brawn to launch it in a straight line (zero to 60 mph in a hair over six seconds, thanks to its big Hemi® engine), using its six-speed manual stickshift; the newer models’ independent suspension means the Challenger is a sportier handler than ever before. Some of the more tricked-out Challengers are factory-built hot rods; the Scat Pack option gives drivers nearly 500 horsepower.',500,9);
@@ -150,14 +149,31 @@ INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES (3,3,"../image
 INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES (3,4,"../images/Tesla Model 3 Red.jpg");
 
 
-SELECT * from car;
-SELECT * from person;
-SELECT * from modelType;
-select * from address order by addressID;
+-- SELECT * from car;
+-- SELECT * from person;
+-- SELECT * from modelType;
+-- select * from address order by addressID;
 
 DROP PROCEDURE numCarsAvailable;
+-- Check this --> 
 
-DELIMITER $$
+-- DELIMITER $$
+-- create definer=`swastik`@`localhost` PROCEDURE numCarsAvailable(IN model_ID INT, IN time_in TIMESTAMP, IN time_out TIMESTAMP, OUT num_cars INT)
+-- COMMENT 'Procedure to find the number of cars available for a particular model'
+-- BEGIN
+-- 	DROP TEMPORARY TABLE IF EXISTS tmp_availCars;
+--     CREATE TEMPORARY TABLE tmp_availCars
+--     SELECT carID FROM (SELECT * FROM car where car.modelID = model_ID) AS selectedCars 
+--     WHERE carID NOT IN 
+--     (SELECT carID FROM reservation where ( 
+--     ((`reservation`.`timein` > `time_in`) AND (`reservation`.`timeout` > `time_out`)) OR
+--     ((`reservation`.`timein` < `time_in`) AND (`reservation`.`timeout` < `time_out`)) OR 
+--     ((`reservation`.`timein` < `time_in`) AND (`reservation`.`timeout` > `time_out`))));
+--     SELECT count(carID) INTO num_cars FROM tmp_availCars;
+-- END $$
+-- DELIMITER ;
+
+DELIMITER $$ -- Shouldn't we define transactions here, instead of procedures ?
 CREATE PROCEDURE numCarsAvailable(IN model_ID INT, IN time_in TIMESTAMP, IN time_out TIMESTAMP, OUT num_cars INT)
 COMMENT 'Procedure to find the number of cars available for a particular model'
 BEGIN
@@ -165,10 +181,10 @@ BEGIN
     CREATE TEMPORARY TABLE tmp_availCars
     SELECT carID FROM (SELECT * FROM car where car.modelID = model_ID) AS selectedCars 
     WHERE carID NOT IN 
-    (SELECT carID FROM reservation where 
-    (reservation.timein>time_in AND reservation.timeout > time_out) OR
-    (reservation.timein<time_in AND reservation.timeout < time_out) OR 
-    (reservation.timein<time_in AND reservation.timeout > time_out));
+    (SELECT carID FROM reservation where ( 
+    (`reservation`.`timein` > `time_in` AND `reservation`.`timeout` > `time_out`) OR
+    (`reservation`.`timein` < `time_in` AND `reservation`.`timeout` < `time_out`) OR 
+    (`reservation`.`timein` < `time_in` AND `reservation`.`timeout` > `time_out`)));
     
     -- Tried a outer join / left join to get all reserved & available cars for a given model, unidentified issues
 -- DROP TEMPORARY TABLE IF EXISTS tmp_availCars;
