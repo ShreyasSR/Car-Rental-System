@@ -223,13 +223,14 @@ MODIFIES SQL DATA
 SQL SECURITY INVOKER
 COMMENT 'Procedure to check waitlist and add to reservation'
 BEGIN
-    SET AUTOCOMMIT = 0;
-    START TRANSACTION;
-    
     DECLARE n INT DEFAULT 0;    
     DECLARE i INT DEFAULT 0;
     Select count(*)  from waitlist into n;
     set i = 0;
+
+    SET AUTOCOMMIT = 0;
+    START TRANSACTION;
+
     while i<n do
         CALL numCarsAvailable(modelID,timein,timeout,@n);
         if(n>0)
