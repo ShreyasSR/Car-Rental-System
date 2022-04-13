@@ -254,3 +254,50 @@ SELECT * from modelType;
 -- Testing for model ID 2, which has rate_by_hour 120, rate_by_km 11
 select amount(1,'Hour',10) as 'amt1';
 select amount(1,'KM',10) as 'amt2';
+
+-- check_waitlist` | TRANSACTION
+DROP PROCEDURE IF EXISTS `check_waitlist`;
+
+DELIMITER $$
+CREATE DEFINER=`root`@`localhost` PROCEDURE 
+`check_waitlist`()
+MODIFIES SQL DATA
+SQL SECURITY INVOKER
+COMMENT 'Procedure to check waitlist and add to reservation'
+BEGIN
+    DECLARE n INT DEFAULT 0;    
+    DECLARE i INT DEFAULT 0;
+    Select count(*)  from waitlist into n;
+    set i = 0;
+
+    SET AUTOCOMMIT = 0;
+    START TRANSACTION;
+
+    while i<n do
+        CALL numCarsAvailable(modelID,timein,timeout,@n);
+        if(n>0)
+        then
+            select waitID into @wID from carrentalsystem.waitlist LIMIT i,1;
+            select carID into @selCarID from tmp_availCars LIMIT 1;
+            INSERT into carrentalsystem.reservation(userID,carID,rateMode,val,timein,timeout)
+                Select (userID,@selCarID,rateMode,val,timein, timeout) from carrentalsystem.waitlist LIMIT i,1;
+            DELETE from waitlist where waitID=@wID;
+        end if;
+    set i = i + 1;
+    end while;
+
+    COMMIT;
+    SET AUTOCOMMIT = 1;
+END$$
+DELIMITER ;
+
+-- TRIGGER add_car
+DROP TRIGGER IF EXISTS add_car;
+
+DELIMITER $$
+CREATE TRIGGER add_car
+AFTER INSERT ON car
+BEGIN
+    CALL check_waitlist;
+END$$
+DELIMITER ;
