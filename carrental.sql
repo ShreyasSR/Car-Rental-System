@@ -161,7 +161,8 @@ BEGIN
     (SELECT carID FROM reservation where ( 
     ((`reservation`.`timein` > `time_in`) AND (`reservation`.`timeout` > `time_out`)) OR
     ((`reservation`.`timein` < `time_in`) AND (`reservation`.`timeout` < `time_out`)) OR 
-    ((`reservation`.`timein` < `time_in`) AND (`reservation`.`timeout` > `time_out`))));
+    ((`reservation`.`timein` < `time_in`) AND (`reservation`.`timeout` > `time_out`))
+    ));
     SELECT count(carID) INTO num_cars FROM tmp_availCars;
 
     COMMIT;
@@ -222,7 +223,7 @@ DELIMITER $$
 CREATE DEFINER=`root`@`localhost` PROCEDURE 
 `request_reservation`(IN user_ID INT, 
 					IN model_ID INT UNSIGNED, 
-                    IN rateMode NUMERIC(2) UNSIGNED, 
+                    IN rateMode ENUM('Hour','KM'), 
                     IN val NUMERIC(2) UNSIGNED, 
                     IN time_IN TIMESTAMP, 
                     IN time_out TIMESTAMP)
@@ -236,17 +237,12 @@ BEGIN
 
     CALL numCarsAvailable(model_ID,time_in,time_out,@n);
     SELECT carID INTO @selCarID from tmp_availCars LIMIT 1;
-    -- SET @rateHour = (SELECT rate_by_hour from modelType WHERE modelID=model_ID); 
-    -- SET @rateKm = (SELECT rate_by_km from modelType WHERE modelID=model_ID); 
-    -- IF rateMode=0 THEN SET @amount=val*@rateHour;
-    -- ELSE SET @amount = val*@rateKm;
-    -- END IF;
     IF(@n>0)
     THEN
         INSERT INTO carrentalsystem.reservation(userID,carID,rateMode,val,timein,timeout)
             VALUES (user_ID,@selCarID,rateMode,val,time_in,time_out);
     ELSE
-    INSERT INTO waitlist (userID, modelID, timein, timeout) VALUES (user_ID,model_ID,time_in,time_out);
+    INSERT INTO waitlist (userID, modelID, timein, timeout,rateMode,val) VALUES (user_ID,model_ID,time_in,time_out,rateMode,val);
     END IF;
 
     COMMIT;
