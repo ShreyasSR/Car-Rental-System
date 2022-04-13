@@ -7,16 +7,15 @@
 -- CREATE DATABASE carrentalsystem;
 USE carrentalsystem;
 
--- DROP TABLES
--- Don't change this order, it accounts for foreign key dependencies
 
-DROP TABLE reservation;
-DROP TABLE waitlist;
-DROP TABLE car;
-DROP TABLE person;
-DROP TABLE modelType;
-DROP TABLE address;
+DROP TABLE IF EXISTS reservation;
+DROP TABLE IF EXISTS waitlist;
+DROP TABLE IF EXISTS car;
+DROP TABLE IF EXISTS person;
+DROP TABLE IF EXISTS modelType;
+DROP TABLE IF EXISTS address;
 
+-- Table creations
 CREATE TABLE IF NOT EXISTS address(
     addressID INT UNSIGNED NOT NULL AUTO_INCREMENT,
     street VARCHAR(100),
@@ -99,8 +98,9 @@ CREATE TABLE IF NOT EXISTS reservation(
 );
 
  
+ -- Inserting values
 
--- Address entries
+-- -- Address entries
 INSERT INTO carrentalsystem.address (street, city, state, country) VALUES ('22B-Bakers Street', 'London', 'London', 'England');
 INSERT INTO carrentalsystem.address (street, city, state, country) VALUES ('5/a, Modi Chawl, Station Rd, Santacruz (west)', 'Mumbai', 'Maharashtra', 'India');
 INSERT INTO carrentalsystem.address (street, city, state, country) VALUES ('13, Karaneeswarar Pagoda St, Mylapore', 'Chennai', 'Tamil Nadu', 'India');
@@ -109,8 +109,7 @@ INSERT INTO carrentalsystem.address (street, city, state, country) VALUES ('A 10
 INSERT INTO carrentalsystem.address (street, city, state, country) VALUES ('3683 Union Street', 'Seattle', 'Washington', 'United States');
 INSERT INTO carrentalsystem.address (street, city, state, country) VALUES ('2119 Shinn Avenue', 'Hanau', 'Hesse', 'Germany');
 
-
--- Person Entries
+-- -- Person Entries
 INSERT INTO carrentalsystem.person(firstName, lastName, email, phone, userName, pwd, gender, addressID)
 	VALUES ('Sherlock','Holmes','sherholmes@gmail.com','+447911123456','sherh','drWatson1','M',1);
 INSERT INTO carrentalsystem.person(firstName, lastName, email, phone, userName, pwd, gender, addressID)
@@ -120,8 +119,7 @@ INSERT INTO carrentalsystem.person(firstName, lastName, email, phone, userName, 
 INSERT INTO carrentalsystem.person(firstName, lastName, email, phone, userName, pwd, gender, addressID)
 	VALUES ('Dinesh','Karthik','dineshk@outlook.com','+918888822222','DK23','DineK1','F',3);
     
-
--- Car Model entries
+-- -- Car Model entries
 INSERT INTO carrentalsystem.modelType (name, description, rate_by_hour, rate_by_km) VALUES ('Maruti Swift Dzire','4-seater Available in White, Gray & Blue Colours',120,11);
 INSERT INTO carrentalsystem.modelType (name, description, rate_by_hour, rate_by_km) VALUES ('Maruti Ertiga','7-seater, Available in White, Silver, Red, Gray & Blue Colours',170,17);
 INSERT INTO carrentalsystem.modelType (name, description, rate_by_hour, rate_by_km) VALUES ('Tesla Model 3', '5-seater Available in Black, White, Silver, Red, Gray & Blue Colours',150,15);
@@ -131,7 +129,7 @@ INSERT INTO carrentalsystem.modelType (name, description, rate_by_hour, rate_by_
 INSERT INTO carrentalsystem.modelType (name, description, rate_by_hour, rate_by_km) VALUES ('Chevrolet Corvette', 'For a certain set of enthusiasts, the Corvette is more than a sports car — it’s American heritage on wheels. The Corvette has been in production since 1953 and the car is currently in its seventh (C7) generation, which hit showrooms in 2014. At an average price of close to $40,000 on our website, a used Corvette is the priciest sports car on this list; but then, you do get a lot for your money.',800,11);
 INSERT INTO carrentalsystem.modelType (name, description, rate_by_hour, rate_by_km) VALUES ('Nissan 370Z', 'Launched in 2010, the 370Z replaced the visually similar 350Z and traces its lineage back to the 240Z of the early 1970s. Available as both a coupe or a roadster, this compact two-seater checks all the sports car boxes. Power comes from a 3.7L V6 that puts 330 horsepower to the rear wheels through a six-speed manual or a seven-speed automatic transmission (the auto gearbox version comes with paddle shifters). From standing still, this Nissan zooms to 60 mph in around five seconds. If that’s not fast enough you, seek out the NISMO models, which are sportier and make an extra heap of horsepower.',900,15);
 
--- Car entries
+-- -- Car entries
 INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES (1,2,"../images/Swift Dzire Gray.jpeg");
 INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES (1,1,"../images/Swift Dzire White.jpeg");
 INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES (2,1,"../images/Ertiga Black.jpg");
@@ -140,13 +138,14 @@ INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES (3,3,"../image
 INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES (3,4,"../images/Tesla Model 3 Red.jpg");
 
 
--- SELECT * from car;
--- SELECT * from person;
--- SELECT * from modelType;
--- select * from address order by addressID;
+-- Procedures (which have transactions enclosed in them for concurrency purposes)
 
-DROP PROCEDURE numCarsAvailable;
--- Swastik
+
+-- numCarsAvailable returns number of cars available for a particular model given the timein and time out
+-- i.e, the start and end times of the reservation, and also creates a temporary table to list all the cars
+-- Temp. table was created for ease of access to extend to select cars based on location, priority,etc 
+
+DROP PROCEDURE IF EXISTS numCarsAvailable;
 DELIMITER $$
 create definer=`root`@`localhost` PROCEDURE numCarsAvailable(IN model_ID INT, IN time_in TIMESTAMP, IN time_out TIMESTAMP, OUT num_cars INT)
 COMMENT 'Procedure to find the number of cars available for a particular model'
@@ -161,7 +160,7 @@ BEGIN
     (SELECT carID FROM reservation where ( 
     ((`reservation`.`timein` > `time_in`) AND (`reservation`.`timein` < `time_out`) AND (`reservation`.`timeout` > `time_out`)) OR
     ((`reservation`.`timein` < `time_in`) AND (`reservation`.`timeout` < `time_out`) AND (`reservation`.`timeout` > `time_in`)) OR 
-    ((`reservation`.`timein` < `time_in`) AND (`reservation`.`timeout` > `time_out`)) 
+    ((`reservation`.`timein` <= `time_in`) AND (`reservation`.`timeout` >= `time_out`)) 
     ));
     SELECT count(carID) INTO num_cars FROM tmp_availCars;
 
@@ -170,64 +169,25 @@ BEGIN
 END $$
 DELIMITER ;
 
+-- Testing if the procedure returns cars (no reservations yet)
+-- These are the cars available
+-- SELECT * FROM car;
+CALL numCarsAvailable(1,'2022-3-29 8:00:00','2022-3-29 9:00:00',@n);
+SELECT @n; -- number of cars available
+SELECT * FROM tmp_availCars; -- car IDs of the available cars
 
-
--- Shreyas
--- DELIMITER $$ -- Shouldn't we define transactions here, instead of procedures ?
--- CREATE PROCEDURE numCarsAvailable(IN model_ID INT, IN time_in TIMESTAMP, IN time_out TIMESTAMP, OUT num_cars INT)
--- COMMENT 'Procedure to find the number of cars available for a particular model'
--- BEGIN
--- 	DROP TEMPORARY TABLE IF EXISTS tmp_availCars;
---     CREATE TEMPORARY TABLE tmp_availCars
---     SELECT carID FROM (SELECT * FROM car where car.modelID = model_ID) AS selectedCars 
---     WHERE carID NOT IN 
---     (SELECT carID FROM reservation where ( 
---     (`reservation`.`timein` > `time_in` AND `reservation`.`timeout` > `time_out`) OR
---     (`reservation`.`timein` < `time_in` AND `reservation`.`timeout` < `time_out`) OR 
---     (`reservation`.`timein` < `time_in` AND `reservation`.`timeout` > `time_out`)));
---     
---     -- Tried a outer join / left join to get all reserved & available cars for a given model, unidentified issues
--- -- DROP TEMPORARY TABLE IF EXISTS tmp_availCars;
--- --     CREATE TEMPORARY TABLE tmp_availCars
--- -- 	SELECT t1.carID,modelID,timein,timeout
--- --     FROM ((SELECT * FROM
--- --      (SELECT * FROM car where car.modelID = model_ID) AS t1
--- --      JOIN 
--- --      (SELECT * FROM reservation) AS t2 ) )AS selectedCars;
---     -- WHERE selectedCars.carID NOT IN 
--- --     (SELECT carID FROM reservation where 
--- --     (reservation.timein>time_in AND reservation.timeout > time_out) OR
--- --     (reservation.timein<time_in AND reservation.timeout < time_out) OR 
--- --     (reservation.timein<time_in AND reservation.timeout > time_out));
---     
---     -- Returning a count of the available cars
---     SELECT count(carID) INTO num_cars FROM tmp_availCars;
---     
---     -- Select one carID only
---     -- SELECT selectedCars.carID into car_ID
--- --     FROM (SELECT * FROM car where car.modelID = model_ID ) AS selectedCars
--- --     WHERE selectedCars.carID NOT IN (SELECT carID FROM reservation)
--- --     LIMIT 1;
--- END $$
-
-DELIMITER ;
-SELECT * FROM car;
-
--- Testing if it returns cars (no reservations yet_
-CALL numCarsAvailable(1,'2001-12-23 8:00:00','2001-12-23 9:00:00',@n);
-SELECT @n;
-SELECT * FROM tmp_availCars;
-
+-- request_reservation will take as input userID, modelID, rateMode (type: hours/kms), val (number of hours/kms)
+-- and calls numCarsAvailable to check if cars are available. If yes, a car (lowest car ID implicitly) is alloted
+-- and an entry is made in the reservation relation. Else, the details are passed on and a waitlist entry is made
 
 DROP PROCEDURE IF EXISTS request_reservation;
-
 DELIMITER $$
 CREATE DEFINER=`root`@`localhost` PROCEDURE 
 `request_reservation`(IN user_ID INT, 
 					IN model_ID INT UNSIGNED, 
                     IN rateMode ENUM('Hour','KM'), 
                     IN val NUMERIC(2) UNSIGNED, 
-                    IN time_IN TIMESTAMP, 
+                    IN time_in TIMESTAMP, 
                     IN time_out TIMESTAMP)
  MODIFIES SQL DATA
  DETERMINISTIC
@@ -252,6 +212,20 @@ BEGIN
 END $$
 DELIMITER ;
 
+-- Testing reservation (assuming there are 2 cars if model ID 1, which have no prior reservations from 18 to 19 hrs on 23rd December 2012)
+-- request_reservation(IN user_ID INT, IN model_ID INT UNSIGNED, IN rateMode NUMERIC(2) UNSIGNED, IN val NUMERIC(2) UNSIGNED, IN time_IN TIMESTAMP, IN time_out TIMESTAMP)
+
+CALL request_reservation(1, 1, 1, 10, '2022-4-10 18:00:00','2022-4-10 19:00:00');
+CALL request_reservation(1, 1, 1, 10, '2022-4-10 18:00:00','2022-4-10 19:00:00');
+-- We made two requests for request_reservation for model ID 1 from user 1
+-- There were a total of 2 cars available, verify if 2 reservations were made for separate car IDs
+SELECT * FROM reservation;
+-- Now, repeat the previous request. Since no more cars are available, an entry should be made into waitlist
+CALL request_reservation(1, 1, 1, 10, '2022-4-10 18:00:00','2022-4-10 19:00:00');
+SELECT * FROM reservation;
+SELECT * FROM waitlist;
+
+-- A procedure to calculate amount from the model ID, rate mode (type: hours / kms) , and number of hours / kms
 DROP FUNCTION IF EXISTS amount;
 DELIMITER $$
 CREATE 
@@ -274,33 +248,3 @@ BEGIN
 END $$
 DELIMITER ;
 
--- Testing reservation
--- request_reservation(IN user_ID INT, IN model_ID INT UNSIGNED, IN rateMode NUMERIC(2) UNSIGNED, IN val NUMERIC(2) UNSIGNED, IN time_IN TIMESTAMP, IN time_out TIMESTAMP)
-CALL request_reservation(1, 1, 1, 10, '2012-12-23 18:00:00','2012-12-23 19:00:00');
--- Testing if it returns cars (after 
-CALL numCarsAvailable(1,'2012-12-23 18:10:00','2012-12-23 18:50:00',@n);
-SELECT @n;
-SELECT * FROM tmp_availCars;
-
-SELECT * FROM reservation;
-SELECT * FROM car;
-
-CALL request_reservation(2, 1, 1, 10, '2012-12-23 18:00:00','2012-12-23 19:00:00');
-CALL request_reservation(1, 4, 1, 10, '2012-12-23 18:00:00','2012-12-23 19:00:00');
-
-CALL request_reservation(1, 1, 1, 10, date("2022-04-12 17:24:01"),date("2022-04-12 18:24:01"));
-SELECT @time1 = date("2022-04-12 17:24:01");
-
-SELECT * from reservation;
-SELECT * from waitlist;
-SELECT * from tmp_availCars;
-SELECT @n;
-
--- Deletes all rows
-DELETE FROM reservation;
-DELETE FROM waitlist;
-
-SELECT carID FROM reservation where 
-    (reservation.timein> date("2022-04-12 17:24:01") AND reservation.timeout > date("2022-04-12 18:24:01")) OR
-    (reservation.timein< date("2022-04-12 17:24:01") AND reservation.timeout < date("2022-04-12 18:24:01")) OR 
-    (reservation.timein< date("2022-04-12 17:24:01") AND reservation.timeout > date("2022-04-12 18:24:01"));
