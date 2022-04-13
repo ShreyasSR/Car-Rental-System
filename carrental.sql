@@ -225,7 +225,8 @@ CALL request_reservation(1, 1, 1, 10, '2022-4-10 18:00:00','2022-4-10 19:00:00')
 SELECT * FROM reservation;
 SELECT * FROM waitlist;
 
--- A procedure to calculate amount from the model ID, rate mode (type: hours / kms) , and number of hours / kms
+-- amount is procedure to calculate amount from the model ID, rate mode (type: hours / kms) 
+-- , and number of hours / kms
 DROP FUNCTION IF EXISTS amount;
 DELIMITER $$
 CREATE 
@@ -248,3 +249,8 @@ BEGIN
 END $$
 DELIMITER ;
 
+-- Testing amount
+SELECT * from modelType;
+-- Testing for model ID 2, which has rate_by_hour 120, rate_by_km 11
+select amount(1,'Hour',10) as 'amt1';
+select amount(1,'KM',10) as 'amt2';
