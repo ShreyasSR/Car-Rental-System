@@ -249,6 +249,17 @@ BEGIN
 END$$
 DELIMITER ;
 
+-- TRIGGER add_car
+DROP TRIGGER IF EXISTS add_car;
+
+DELIMITER $$
+CREATE TRIGGER add_car
+AFTER INSERT ON car
+BEGIN
+    CALL check_waitlist;
+END$$
+DELIMTER ;
+
 -- amount | FUNCTION
 DROP FUNCTION IF EXISTS `amount`;
 
