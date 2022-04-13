@@ -302,3 +302,7 @@ BEGIN
     CALL check_waitlist;
 END$$
 DELIMITER ;
+
+
+SELECT * FROM waitlist;
+INSERT INTO carrentalsystem.car (modelID, ownerID, carimg) VALUES (1,4,"../images/Swift Dzire Red.jpg");
